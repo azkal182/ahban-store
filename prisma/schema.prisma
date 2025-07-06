@@ -1,0 +1,102 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+    provider = "prisma-client-js"
+    output   = "../src/generated/prisma"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+model User {
+    id           String         @id @default(cuid())
+    username     String         @unique
+    password     String
+    balance      Int            @default(0)
+    deposits     Deposit[]
+    historyAkrab historyAkrab[]
+}
+
+model Deposit {
+    id            String       @id @default(cuid())
+    userId        String
+    amount        Int
+    status        String
+    orderId       String       @unique
+    createdAt     DateTime     @default(now())
+    updatedAt     DateTime     @updatedAt
+    paymentType   String?
+    transactionAt DateTime?
+    log           DepositLog[]
+
+    user User @relation(fields: [userId], references: [id])
+}
+
+model DepositLog {
+    id        String   @id @default(cuid())
+    orderId   String
+    payload   Json
+    createdAt DateTime @default(now())
+    Deposit   Deposit? @relation(fields: [depositId], references: [id])
+    depositId String?
+}
+
+model NomorLogin {
+    id           String      @id @default(cuid())
+    nomorHp      String      @unique
+    name         String?
+    createdAt    DateTime    @default(now())
+    expired      String?
+    updatedAt    DateTime    @updatedAt
+    accessToken  String
+    refreshToken String?
+    SlotAkrab    SlotAkrab[]
+    Kategori     Kategori?   @relation(fields: [kategoriId], references: [id])
+    kategoriId   String?
+}
+
+model SlotAkrab {
+    id                    String     @id @default(cuid())
+    nomorLoginId          String
+    nomorLogin            NomorLogin @relation(fields: [nomorLoginId], references: [id], onDelete: Cascade)
+    slotKe                Int
+    alias                 String
+    nomor                 String
+    sisaAdd               Int
+    slotId                Int
+    kuotaBersma           Int?       @default(0) @map("kuota_bersama")
+    pemakaianKuotaBersama Int?       @default(0) @map("pemakaian_kuota_bersama")
+    totalKuotaBenefit     Int?       @default(0) @map("total-kuota-benefit")
+    sisaKuotaBenefit      Int?       @default(0) @map("sisa-kuota-benefit")
+    familyMemberId        String?
+    createdAt             DateTime   @default(now())
+    updatedAt             DateTime   @updatedAt
+}
+
+model Kategori {
+    id          String       @id @default(cuid())
+    nama        String       @unique
+    nomorLogins NomorLogin[]
+    createdAt   DateTime     @default(now())
+    updatedAt   DateTime     @updatedAt
+}
+
+model historyAkrab {
+    id             String   @id @default(cuid())
+    userId         String
+    user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    nomorAnggota   String
+    nomorPengelola String
+    slotKe         Int
+    alias          String
+    namaPengelola  String
+    kuotaBersama   Int?     @default(0) @map("kuota_bersama")
+    createdAt      DateTime @default(now())
+    updatedAt      DateTime @updatedAt
+}
